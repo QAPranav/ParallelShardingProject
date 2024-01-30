@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Deploy Playwright Reports
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
           npx playwright merge-reports --reporter html ./all-blob-reports
 
       - name: Archive reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         if: always()
         with:
           name: playwright-report
@@ -44,15 +44,48 @@ jobs:
           retention-days: 30
 
       - name: Upload blob report to GitHub Actions Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         if: always()
         with:
           name: blob-report-${{ matrix.shardIndex }}
           path: blob-report
           retention-days: 1
 
-  publish-live:
+  merge-reports:
+    if: always()
     needs: [playwright-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: all-blob-reports
+          name: blob-report-*
+
+      - name: Merge into HTML Report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v2
+        with:
+          name: html-report--attempt-${{ github.run_attempt }}
+          path: playwright-report
+          retention-days: 14
+  
+  deploy-github-pages:
+    if: always()
+    needs: [merge-reports]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -70,6 +103,7 @@ jobs:
           BRANCH: gh-pages
           FOLDER: playwright-report
           CLEAN: true
+
 
       - name: Print URL
         run: |
