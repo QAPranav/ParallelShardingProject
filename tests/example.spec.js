@@ -1,7 +1,7 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-test.describe('This is CICD Test', async()=>{
+test.describe('Deployed Test results', async()=>{
   test('has title', async ({ page }) => {
     await page.goto('https://playwright.dev/');
   
