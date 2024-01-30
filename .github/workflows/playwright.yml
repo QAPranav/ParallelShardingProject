@@ -65,3 +65,18 @@ jobs:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
         retention-days: 14
+  
+  publish-live:
+    needs: [merge-reports]
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Extract ZIP file
+        run : unzip -o playwright-report.zip
+      - name: Deploy to GitHub Pages
+        uses : JamesIves/github-pages-deploy-action@4.1.5
+        with : 
+          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: playwright-report
+          CLEAN: true   
+
