@@ -30,7 +30,10 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test --shard=${{ matrix.shardIndex }}
+        run: |
+          npx playwright test --shard=${{ matrix.shardIndex }}
+          # Merge reports
+          npx playwright merge-reports --reporter html ./all-blob-reports
 
       - name: Archive reports
         uses: actions/upload-artifact@v3
@@ -48,66 +51,24 @@ jobs:
           path: blob-report
           retention-days: 1
 
-  merge-reports:
+  publish-live:
     if: always()
     needs: [playwright-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '16'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: all-blob-reports
-          pattern: blob-report/*
-          merge-multiple: true
-
-      - name: Merge into HTML Report
-        run: npx playwright merge-reports --reporter html ./all-blob-reports
-
-      - name: Upload HTML report
-        uses: actions/upload-artifact@v4
-        with:
-          name: html-report--attempt-${{ github.run_attempt }}
-          path: playwright-report
-          retention-days: 14
-  
-  publish-live:
-    if: always()
-    needs: [merge-reports]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '16'
 
-      - name: Download ZIP artifact
-        uses: actions/download-artifact@v3
+      - name: Download HTML report artifact
+        uses: actions/download-artifact@v2
         with:
           name: playwright-report
-          path: ./
-
-      - name: List contents of the directory
-        run: ls -l
-
-      - name: Extract ZIP file
-        run: unzip -o html-report--attempt-${{ github.run_attempt }}.zip
-
-      - name: List contents after extraction
-        run: ls -l
+          path: playwright-report
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
