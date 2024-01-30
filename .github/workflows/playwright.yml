@@ -104,7 +104,7 @@ jobs:
         run: ls -l
 
       - name: Extract ZIP file
-        run: unzip -o playwright-report.zip
+        run: unzip -o html-report--attempt-${{ github.run_attempt }}.zip
 
       - name: List contents after extraction
         run: ls -l
