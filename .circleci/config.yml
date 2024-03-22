@@ -11,8 +11,7 @@ jobs:
       - run:
           name: Install Playwright dependencies
           command: |
-            npm install -g playwright
-            npm install
+            npm ci && npx playwright install --with-deps
 
       - run:
           name: Run Playwright tests
