@@ -1,61 +1,89 @@
 version: 2.1
 
 jobs:
-  playwright-test:
+  test_shard_1:
     docker:
-      - image: circleci/node:latest
+      - image: circleci/node:14
     steps:
       - checkout
-
       - run:
-          name: Install dependencies
-          command: npm ci
-
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
       - run:
-          name: Install Playwright Browsers
-          command: npx playwright install --with-deps
-
+          name: Run Playwright tests - Shard 1
+          command: npx playwright test --shard=1/4
       - run:
-          name: Run Playwright tests
-          command: |
-            SHARD="$((${CIRCLE_NODE_INDEX}+1))"
-            npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
-            npx playwright merge-reports --reporter html ./all-blob-reports
+          name: Store Blob report
+          command: mv blob-report /tmp/blob-report-shard-1
 
-      - persist_to_workspace:
-          root: .
-          paths:
-            - playwright-report
-            - blob-report
-
-  publish-live:
+  test_shard_2:
     docker:
-      - image: circleci/node:latest
+      - image: circleci/node:14
     steps:
-      - attach_workspace:
-          at: .
-
+      - checkout
       - run:
-          name: Deploy to GitHub Pages
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
+      - run:
+          name: Run Playwright tests - Shard 2
+          command: npx playwright test --shard=2/4
+      - run:
+          name: Store Blob report
+          command: mv blob-report /tmp/blob-report-shard-2
+
+  test_shard_3:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run:
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
+      - run:
+          name: Run Playwright tests - Shard 3
+          command: npx playwright test --shard=3/4
+      - run:
+          name: Store Blob report
+          command: mv blob-report /tmp/blob-report-shard-3
+
+  test_shard_4:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run:
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
+      - run:
+          name: Run Playwright tests - Shard 4
+          command: npx playwright test --shard=4/4
+      - run:
+          name: Store Blob report
+          command: mv blob-report /tmp/blob-report-shard-4
+
+  merge_reports:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run:
+          name: Merge Blob reports
           command: |
-            # Replace access token with your GitHub access token
-            curl -X POST \
-              -H "Authorization: token YOUR_GITHUB_ACCESS_TOKEN" \
-              -d '{"event_type": "deploy"}' \
-              https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/dispatches
+            mkdir -p all-blob-reports
+            cp /tmp/blob-report-shard-*/* all-blob-reports/
+            npx playwright merge-reports --reporter html ./all-blob-reports
 
 workflows:
   version: 2
-  playwright-tests:
+  test_and_merge:
     jobs:
-      - playwright-test
-
-      - publish-live:
+      - test_shard_1
+      - test_shard_2
+      - test_shard_3
+      - test_shard_4
+      - merge_reports:
           requires:
-            - playwright-test
-          filters:
-            branches:
-              only:
-                - main
-                - master
-    parallelism: 4
+            - test_shard_1
+            - test_shard_2
+            - test_shard_3
+            - test_shard_4
