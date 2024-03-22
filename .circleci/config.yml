@@ -3,50 +3,17 @@ version: 2.1
 jobs:
   playwright-test:
     docker:
-      - image: circleci/node:latest
-    parallelism: 4  # Define parallelism at the job level
+      - image: pw-jammy-development
+    parallelism: 4
     steps:
-      - checkout
-
-      - run:
-          name: Install dependencies
-          command: npm ci
-
-      - run:
-          name: Install Playwright Browsers
-          command: npx playwright install --with-deps
-
       - run:
           name: Run Playwright tests
           command: |
             SHARD="$((${CIRCLE_NODE_INDEX}+1))"
-            npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
-            npx playwright merge-reports --reporter html ./all-blob-reports
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - playwright-report
-            - blob-report
-
-  publish-live:
-    docker:
-      - image: circleci/node:latest
-    steps:
-      - attach_workspace:
-          at: .
+            npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
 
 workflows:
   version: 2
   playwright-tests:
     jobs:
       - playwright-test
-
-      - publish-live:
-          requires:
-            - playwright-test
-          filters:
-            branches:
-              only:
-                - main
-                - master
