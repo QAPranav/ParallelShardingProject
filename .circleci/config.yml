@@ -3,9 +3,12 @@ version: 2.1
 jobs:
   test_shard_1:
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:16
     steps:
       - checkout
+      - run:
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
       - run:
           name: Run Playwright tests - Shard 1
           command: npx playwright test --shard=1/4
@@ -15,9 +18,12 @@ jobs:
 
   test_shard_2:
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:16
     steps:
       - checkout
+      - run:
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
       - run:
           name: Run Playwright tests - Shard 2
           command: npx playwright test --shard=2/4
@@ -27,9 +33,12 @@ jobs:
 
   test_shard_3:
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:16
     steps:
       - checkout
+      - run:
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
       - run:
           name: Run Playwright tests - Shard 3
           command: npx playwright test --shard=3/4
@@ -39,9 +48,12 @@ jobs:
 
   test_shard_4:
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:16
     steps:
       - checkout
+      - run:
+          name: Install Playwright and browsers
+          command: npm ci && npx playwright install --with-deps
       - run:
           name: Run Playwright tests - Shard 4
           command: npx playwright test --shard=4/4
@@ -51,7 +63,7 @@ jobs:
 
   merge_reports:
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:16
     steps:
       - checkout
       - run:
