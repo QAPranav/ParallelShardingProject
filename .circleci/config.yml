@@ -1,0 +1,61 @@
+version: 2.1
+
+jobs:
+  playwright-test:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: npm ci
+
+      - run:
+          name: Install Playwright Browsers
+          command: npx playwright install --with-deps
+
+      - run:
+          name: Run Playwright tests
+          command: |
+            SHARD="$((${CIRCLE_NODE_INDEX}+1))"
+            npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
+            npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - playwright-report
+            - blob-report
+
+  publish-live:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Deploy to GitHub Pages
+          command: |
+            # Replace access token with your GitHub access token
+            curl -X POST \
+              -H "Authorization: token YOUR_GITHUB_ACCESS_TOKEN" \
+              -d '{"event_type": "deploy"}' \
+              https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/dispatches
+
+workflows:
+  version: 2
+  playwright-tests:
+    jobs:
+      - playwright-test
+
+      - publish-live:
+          requires:
+            - playwright-test
+          filters:
+            branches:
+              only:
+                - main
+                - master
+    parallelism: 4
