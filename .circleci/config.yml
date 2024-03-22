@@ -26,18 +26,6 @@ jobs:
           name: Store Blob report
           command: mv blob-report /tmp/blob-report-shard-$SHARD
 
-  merge_reports:
-    docker:
-      - image: mcr.microsoft.com/playwright:v1.41.1-jammy
-    steps:
-      - checkout
-      - run:
-          name: Merge Blob reports
-          command: |
-            mkdir -p all-blob-reports
-            cp /tmp/blob-report-shard-*/* all-blob-reports/
-            npx playwright merge-reports --reporter html ./all-blob-reports
-
 workflows:
   version: 2
   test_and_merge:
@@ -67,9 +55,3 @@ workflows:
             SHARD: 4
           requires:
             - install_dependencies
-      - merge_reports:
-          requires:
-            - test_shard_1
-            - test_shard_2
-            - test_shard_3
-            - test_shard_4
