@@ -13,10 +13,13 @@ jobs:
       - run:
           name: Run tests with Playwright Shards
           command: |
-           SHARD="$((${CIRCLE_NODE_INDEX}+1))"
-            npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
+            TOTAL_TESTS=24
+            SHARD_SIZE=$((TOTAL_TESTS / CIRCLE_NODE_TOTAL))
+            START_INDEX=$((SHARD_SIZE * CIRCLE_NODE_INDEX))
+            END_INDEX=$((START_INDEX + SHARD_SIZE))
+            npx playwright test --workers=$SHARD_SIZE --testMatch="**/*.spec.js" --repeat-each=1 --headful --headed --grep ".*" --project-type=javascript --timeout=30000 --retries=0 --max-failures=0 --output=flaky --video=on --trace=on --reporter=dot --repeat-each=1 --workers=$CIRCLE_NODE_TOTAL --parallel $START_INDEX-$END_INDEX
             # Store Blob report
-            cp -r blob-report /tmp/blob-report-shard-${SHARD}
+            cp -r blob-report /tmp/blob-report-shard-${CIRCLE_NODE_INDEX}
 
 # Invoke jobs via workflows
 workflows:
