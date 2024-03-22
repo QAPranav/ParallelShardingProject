@@ -3,14 +3,29 @@ version: 2.1
 jobs:
   playwright-test:
     docker:
-      - image: pw-jammy-development
+      - image: circleci/node:latest
     parallelism: 4
     steps:
+      - checkout
+
+      - run:
+          name: Install Playwright dependencies
+          command: |
+            npm install -g playwright
+            npm install
+
       - run:
           name: Run Playwright tests
           command: |
             SHARD="$((${CIRCLE_NODE_INDEX}+1))"
-            npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
+            npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
+            npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - playwright-report
+            - blob-report
 
 workflows:
   version: 2
