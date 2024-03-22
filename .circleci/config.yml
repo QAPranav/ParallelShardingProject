@@ -4,6 +4,7 @@ jobs:
   playwright-test:
     docker:
       - image: circleci/node:latest
+    parallelism: 4  # Define parallelism at the job level
     steps:
       - checkout
 
@@ -35,15 +36,6 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run:
-          name: Deploy to GitHub Pages
-          command: |
-            # Replace access token with your GitHub access token
-            curl -X POST \
-              -H "Authorization: token YOUR_GITHUB_ACCESS_TOKEN" \
-              -d '{"event_type": "deploy"}' \
-              https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/dispatches
-
 workflows:
   version: 2
   playwright-tests:
@@ -58,4 +50,3 @@ workflows:
               only:
                 - main
                 - master
-    parallelism: 4
