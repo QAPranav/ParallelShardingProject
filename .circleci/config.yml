@@ -1,61 +1,31 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
 jobs:
-  playwright-test:
+  say-hello:
+    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/executor-intro/ & https://circleci.com/docs/configuration-reference/#executor-job
     docker:
-      - image: circleci/node:latest
+      # Specify the version you desire here
+      # See: https://circleci.com/developer/images/image/cimg/base
+      - image: cimg/base:current
+
+    # Add steps to the job
+    # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
     steps:
+      # Checkout the code as the first step.
       - checkout
-
       - run:
-          name: Install dependencies
-          command: npm ci
+          name: "Say hello"
+          command: "echo Hello, World!"
 
-      - run:
-          name: Install Playwright Browsers
-          command: npx playwright install --with-deps
-
-      - run:
-          name: Run Playwright tests
-          command: |
-            SHARD="$((${CIRCLE_NODE_INDEX}+1))"
-            npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
-            npx playwright merge-reports --reporter html ./all-blob-reports
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - playwright-report
-            - blob-report
-
-  publish-live:
-    docker:
-      - image: circleci/node:latest
-    steps:
-      - attach_workspace:
-          at: .
-
-      - run:
-          name: Deploy to GitHub Pages
-          command: |
-            # Replace access token with your GitHub access token
-            curl -X POST \
-              -H "Authorization: token YOUR_GITHUB_ACCESS_TOKEN" \
-              -d '{"event_type": "deploy"}' \
-              https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/dispatches
-
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  version: 2
-  playwright-tests:
+  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
+    # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - playwright-test
-
-      - publish-live:
-          requires:
-            - playwright-test
-          filters:
-            branches:
-              only:
-                - main
-                - master
-    parallelism: 4
+      - say-hello
